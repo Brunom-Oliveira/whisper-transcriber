@@ -1,0 +1,16 @@
+{
+  "name": "whisper-transcriber",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "dev": "concurrently \"npm run dev -w backend\" \"npm start -w frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

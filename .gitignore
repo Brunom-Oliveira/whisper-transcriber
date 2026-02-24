@@ -1,0 +1,10 @@
+﻿node_modules
+npm-debug.log*
+.env
+.env.*
+backend/dist
+backend/uploads/*
+backend/outputs/*
+!backend/uploads/.gitkeep
+!backend/outputs/.gitkeep
+frontend/build
