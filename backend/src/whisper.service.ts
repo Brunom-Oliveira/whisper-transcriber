@@ -136,15 +136,10 @@ export class WhisperService {
             "-m", this.config.modelPath,
             "-l", this.config.language,
             "-t", threadsPerProcess.toString(),
-            "-fa",
-            "-bs", "5", // Beam search maior para maior precisão técnica
-            "-p", initialPrompt, // Prompt inicial com termos chaves
+            "-p", initialPrompt,
             "-f", chunkFile,
             "-otxt",
-            "-of", partBase,
-            "-nth", "0.8",
-            "-et", "2.0",
-            "-lpt", "-0.5"
+            "-of", partBase
           ];
 
           await runCommand(this.config.whisperPath, args, `Erro no bloco ${index + 1}`);
