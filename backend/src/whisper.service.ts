@@ -137,7 +137,7 @@ export class WhisperService {
             "-m", this.config.modelPath,
             "-l", this.config.language,
             "-t", threadsPerProcess.toString(),
-            "-p", initialPrompt,
+            "--prompt", initialPrompt, // Corrigido: --prompt para texto, -p é para numero de processadores
             "-f", chunkFile,
             "-otxt",
             "-of", partBase
