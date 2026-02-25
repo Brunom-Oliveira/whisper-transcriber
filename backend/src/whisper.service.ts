@@ -130,7 +130,8 @@ export class WhisperService {
           const chunkFile = chunks[index];
           const partBase = path.join(partialDir, `part_${String(index).padStart(3, "0")}`);
 
-          const initialPrompt = "Transcrição de suporte técnico sistema WMS Conquista da empresa Salog. Termos importantes: Picking Expresso, bipar código de barras, SKU, endereçamento, inventário, rotina B22, mercadoria, AnyDesk, WhatsApp, suporte técnico.";
+          // Removidos acentos e caracteres especiais para evitar erro de parsing no CLI
+          const initialPrompt = "Suporte tecnico sistema WMS Conquista empresa Salog. Termos: Picking Expresso, bipar, SKU, enderecamento, inventario, rotina B22, mercadoria, AnyDesk, WhatsApp.";
 
           const args = [
             "-m", this.config.modelPath,
