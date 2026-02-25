@@ -13,7 +13,7 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/outputs:/app/outputs
-      - /root/whisper.cpp/models:/opt/whisper/models:ro
+      - /root/whisper.cpp:/opt/whisper.cpp:ro
     restart: unless-stopped
 
   frontend:
