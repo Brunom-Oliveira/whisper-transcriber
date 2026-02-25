@@ -79,7 +79,7 @@ export class WhisperService {
         "Erro ao normalizar audio com ffmpeg"
       );
 
-      // Segmenta em blocos de 45s para maximizar a granulosidade do paralelismo em CPUs multicore.
+      // Segmenta em blocos maiores (120s) para reduzir o overhead de carregar o modelo na RAM repetidamente.
       onProgress?.({ stage: "Segmentando audio", progress: 20 });
       const segmentPattern = path.join(chunksDir, "chunk_%03d.wav");
       await runCommand(
@@ -93,7 +93,7 @@ export class WhisperService {
           "-f",
           "segment",
           "-segment_time",
-          "45",
+          "120",
           "-c:a",
           "pcm_s16le",
           "-ar",
@@ -111,12 +111,11 @@ export class WhisperService {
       }
 
       const parts: string[] = new Array(chunks.length).fill("");
-      onProgress?.({ stage: "Transcrevendo blocos (Otimizado)", progress: 25 });
+      onProgress?.({ stage: "Transcrevendo blocos (Alta Velocidade)", progress: 25 });
 
-      // Configuração de concorrência: tenta usar o máximo de threads disponíveis de forma inteligente
+      // Configuração de concorrência: Menos processos simultâneos, mas cada um com mais poder de CPU.
       const cpuCores = os.cpus().length;
-      // Para VPS com muitos cores, rodar 3-4 processos em paralelo é o ideal.
-      const concurrency = Math.min(chunks.length, Math.max(1, Math.floor(cpuCores / 4))); 
+      const concurrency = Math.max(1, Math.min(chunks.length, 2)); // Limita a 2 processos para não saturar I/O de disco
       const threadsPerProcess = Math.max(4, Math.floor(cpuCores / concurrency));
 
       let completedChunks = 0;
@@ -137,7 +136,9 @@ export class WhisperService {
             "-m", this.config.modelPath,
             "-l", this.config.language,
             "-t", threadsPerProcess.toString(),
-            "--prompt", initialPrompt, // Corrigido: --prompt para texto, -p é para numero de processadores
+            "--prompt", initialPrompt,
+            "-bs", "2", // Beam search reduzido para velocidade (2 é um bom equilíbrio)
+            "-nt", // No Timestamps: acelera o processamento
             "-f", chunkFile,
             "-otxt",
             "-of", partBase
