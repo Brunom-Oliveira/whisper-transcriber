@@ -13,6 +13,29 @@ interface WhisperConfig {
   language: string;
 }
 
+function runCommand(command: string, args: string[], errPrefix: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args);
+
+    let stderr = "";
+    proc.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+
+    proc.on("error", (err) => {
+      reject(new Error(`${errPrefix}: ${err.message}`));
+    });
+
+    proc.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`${errPrefix}: codigo ${code}. ${stderr}`.trim()));
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
 export class WhisperService {
   private readonly config: WhisperConfig;
 
@@ -20,50 +43,48 @@ export class WhisperService {
     this.config = config;
   }
 
-  transcribe(inputFile: string, outputBasePath: string): Promise<TranscriptionResult> {
-    return new Promise((resolve, reject) => {
-      const args = [
-        "-m",
-        this.config.modelPath,
-        "-l",
-        this.config.language,
-        "-nt",
-        "-f",
-        inputFile,
-        "-otxt",
-        "-of",
-        outputBasePath
-      ];
+  async transcribe(inputFile: string, outputBasePath: string): Promise<TranscriptionResult> {
+    const normalizedInput = `${outputBasePath}.normalized.wav`;
 
-      const proc = spawn(this.config.whisperPath, args);
+    // Normaliza audio para mono 16k para reduzir ruído e melhorar consistencia da transcricao.
+    await runCommand(
+      "ffmpeg",
+      ["-y", "-i", inputFile, "-ac", "1", "-ar", "16000", normalizedInput],
+      "Erro ao normalizar audio com ffmpeg"
+    );
 
-      let stderr = "";
-      proc.stderr.on("data", (chunk: Buffer) => {
-        stderr += chunk.toString();
-      });
+    const args = [
+      "-m",
+      this.config.modelPath,
+      "-l",
+      this.config.language,
+      "-f",
+      normalizedInput,
+      "-otxt",
+      "-of",
+      outputBasePath,
+      "--vad",
+      "-nth",
+      "0.7",
+      "-et",
+      "2.0",
+      "-lpt",
+      "-0.5"
+    ];
 
-      proc.on("error", (err) => {
-        reject(new Error(`Erro ao executar whisper-cli: ${err.message}`));
-      });
+    await runCommand(this.config.whisperPath, args, "Erro ao executar whisper-cli");
 
-      proc.on("close", (code) => {
-        if (code !== 0) {
-          reject(new Error(`whisper-cli finalizou com codigo ${code}. ${stderr}`.trim()));
-          return;
-        }
+    const outputFile = `${outputBasePath}.txt`;
+    if (!fs.existsSync(outputFile)) {
+      throw new Error("Arquivo de transcricao nao foi gerado.");
+    }
 
-        const outputFile = `${outputBasePath}.txt`;
-        if (!fs.existsSync(outputFile)) {
-          reject(new Error("Arquivo de transcricao nao foi gerado."));
-          return;
-        }
+    const transcription = fs.readFileSync(outputFile, "utf-8");
+    fs.promises.unlink(normalizedInput).catch(() => undefined);
 
-        const transcription = fs.readFileSync(outputFile, "utf-8");
-        resolve({
-          transcription,
-          outputFile: path.resolve(outputFile)
-        });
-      });
-    });
+    return {
+      transcription,
+      outputFile: path.resolve(outputFile)
+    };
   }
 }
