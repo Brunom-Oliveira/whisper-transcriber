@@ -32,6 +32,7 @@ export function App() {
   const [isRefining, setIsRefining] = useState(false);
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [fullAudio, setFullAudio] = useState(false);
 
   const fullDownloadUrl = useMemo(() => {
     if (!downloadUrl) return "";
@@ -73,8 +74,7 @@ export function App() {
         text: transcription
       });
       setTranscription(response.data.refinedText);
-      // Opcional: Gerar resumo automaticamente ao refinar
-      onSummarize(response.data.refinedText);
+      // Removida geração automática de resumo para manter ação manual
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.error || "Falha ao refinar texto.");
@@ -95,11 +95,15 @@ export function App() {
     try {
       setLoading(true);
       setError("");
+      setTranscription("");
+      setDownloadUrl("");
+      setSummary("");
       setProgress(0);
       setProgressStage("Enviando arquivo");
 
       const formData = new FormData();
       formData.append("audio", file);
+      formData.append("fullAudio", String(fullAudio));
 
       const start = await axios.post<StartResponse>(`${apiBaseUrl}/api/transcribe`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -157,10 +161,31 @@ export function App() {
         <h1>Whisper Transcriber</h1>
         <p className="subtitle">Upload de audio e transcricao local com whisper.cpp</p>
 
-        <input type="file" accept="audio/*" onChange={onFileChange} />
+        <div className="input-group">
+          <input type="file" accept="audio/*" onChange={onFileChange} id="audio-input" />
+          <label htmlFor="audio-input" className="file-label">
+            {file ? file.name : "Selecionar Áudio"}
+          </label>
+        </div>
 
-        <button onClick={onTranscribe} disabled={loading}>
-          {loading ? "Transcrevendo..." : "Transcrever"}
+        <div className="checkbox-group">
+          <label className="checkbox-container">
+            <input 
+              type="checkbox" 
+              checked={fullAudio} 
+              onChange={(e) => setFullAudio(e.target.checked)} 
+            />
+            <span className="checkmark"></span>
+            Transcrever áudio completo (desativa limite de 6 min)
+          </label>
+        </div>
+
+        <button 
+          onClick={onTranscribe} 
+          disabled={loading || !file} 
+          className="transcribe-btn"
+        >
+          {loading ? "Processando..." : "Iniciar Transcrição"}
         </button>
 
         {loading && (

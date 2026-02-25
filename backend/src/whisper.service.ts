@@ -60,7 +60,8 @@ export class WhisperService {
   async transcribe(
     inputFile: string,
     outputBasePath: string,
-    onProgress?: (update: TranscriptionProgress) => void
+    onProgress?: (update: TranscriptionProgress) => void,
+    fullAudio: boolean = false
   ): Promise<TranscriptionResult> {
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "whisper-job-"));
     const normalizedInput = path.join(workDir, "normalized.wav");
@@ -73,9 +74,15 @@ export class WhisperService {
 
       // Normaliza audio para mono 16k e limita aos primeiros 6 minutos (360s) para performance.
       onProgress?.({ stage: "Normalizando audio", progress: 10 });
+      const ffmpegArgs = ["-y"];
+      if (!fullAudio) {
+        ffmpegArgs.push("-t", "360");
+      }
+      ffmpegArgs.push("-i", inputFile, "-ac", "1", "-ar", "16000", normalizedInput);
+
       await runCommand(
         "ffmpeg",
-        ["-y", "-t", "360", "-i", inputFile, "-ac", "1", "-ar", "16000", normalizedInput],
+        ffmpegArgs,
         "Erro ao normalizar audio com ffmpeg"
       );
 

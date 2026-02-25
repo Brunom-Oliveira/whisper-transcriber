@@ -41,11 +41,56 @@ h1 {
 .subtitle {
   margin: 8px 0 20px;
   color: var(--muted);
+  font-size: 0.95rem;
 }
 
-input[type="file"] {
-  width: 100%;
-  margin-bottom: 12px;
+.input-group {
+  margin-bottom: 20px;
+}
+
+#audio-input {
+  display: none;
+}
+
+.file-label {
+  display: block;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  padding: 30px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #64748b;
+  text-align: center;
+  font-weight: 500;
+}
+
+.file-label:hover {
+  border-color: var(--primary);
+  background: #f0f9ff;
+  color: var(--primary);
+}
+
+.checkbox-group {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--muted);
+  user-select: none;
+}
+
+.checkbox-container input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 button {
