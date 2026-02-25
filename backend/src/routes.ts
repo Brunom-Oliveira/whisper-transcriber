@@ -158,5 +158,65 @@ export function buildRoutes(deps: RouteDeps): Router {
     }
   });
 
+  router.post("/summarize", async (req, res) => {
+    const { text } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      res.status(500).json({ error: "GROQ_API_KEY nao configurada." });
+      return;
+    }
+
+    if (!text) {
+      res.status(400).json({ error: "Texto e obrigatorio para o resumo." });
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            {
+              role: "system",
+              content: `Você é um assistente sênior de suporte técnico para o WMS Conquista. 
+              Sua tarefa é ler uma transcrição de atendimento e gerar um RESUMO TÉCNICO estruturado para abertura de ticket.
+              
+              Estrutura desejada:
+              - **CLIENTE/EMPRESA**: (Identifique se é Salog ou outra)
+              - **RESUMO DO PROBLEMA**: (O que estava acontecendo? Erro na rotina B22? Picking Expresso travado?)
+              - **AÇÕES REALIZADAS**: (O que o técnico fez? Voltou versão? Acessou AnyDesk?)
+              - **PRÓXIMOS PASSOS**: (O que ficou pendente?)
+              
+              Seja direto e use termos técnicos corretos.`
+            },
+            {
+              role: "user",
+              content: `Gere um resumo técnico para este atendimento:\n\n${text}`
+            }
+          ],
+          temperature: 0.1
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro na API da Groq durante o resumo.");
+      }
+
+      const data = await response.json();
+      const summary = data.choices[0]?.message?.content;
+
+      res.status(200).json({ summary });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao gerar resumo.";
+      res.status(500).json({ error: message });
+    }
+  });
+
   return router;
 }

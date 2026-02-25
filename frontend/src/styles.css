@@ -228,6 +228,37 @@ pre {
   box-shadow: none;
 }
 
+.summary-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #3b82f6;
+  color: white;
+  border: 0;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.summary-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.summary-container {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(59, 130, 246, 0.05);
+  border-left: 4px solid #3b82f6;
+  border-radius: 0 8px 8px 0;
+}
+
+.summary-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #1e40af;
+}
+
 .error {
   color: var(--danger);
   margin-top: 15px;

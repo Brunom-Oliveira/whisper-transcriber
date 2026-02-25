@@ -30,6 +30,8 @@ export function App() {
   const [error, setError] = useState("");
   const [times, setTimes] = useState<{ start?: string; end?: string }>({});
   const [isRefining, setIsRefining] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const fullDownloadUrl = useMemo(() => {
     if (!downloadUrl) return "";
@@ -40,10 +42,25 @@ export function App() {
     const selectedFile = event.target.files?.[0] || null;
     setFile(selectedFile);
     setTranscription("");
+    setSummary("");
     setDownloadUrl("");
     setError("");
     setProgress(0);
     setProgressStage("");
+  };
+
+  const onSummarize = async (textToSummarize: string) => {
+    try {
+      setIsSummarizing(true);
+      const response = await axios.post<{ summary: string }>(`${apiBaseUrl}/api/summarize`, {
+        text: textToSummarize
+      });
+      setSummary(response.data.summary);
+    } catch (err) {
+      setError("Erro ao gerar resumo técnico.");
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   const onRefine = async () => {
@@ -56,6 +73,8 @@ export function App() {
         text: transcription
       });
       setTranscription(response.data.refinedText);
+      // Opcional: Gerar resumo automaticamente ao refinar
+      onSummarize(response.data.refinedText);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.error || "Falha ao refinar texto.");
@@ -179,6 +198,14 @@ export function App() {
               )}
             </div>
             <pre>{transcription}</pre>
+
+            {summary && (
+              <div className="summary-container">
+                <h3>📋 Resumo Técnico do Atendimento</h3>
+                <pre style={{ whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>{summary}</pre>
+              </div>
+            )}
+
             <div className="result-actions">
               {fullDownloadUrl && (
                 <a href={fullDownloadUrl} download className="download-btn">
@@ -188,10 +215,19 @@ export function App() {
               <button 
                 className="refine-btn" 
                 onClick={onRefine} 
-                disabled={isRefining}
+                disabled={isRefining || isSummarizing}
               >
-                {isRefining ? "Refinando..." : "✨ Refinar com IA"}
+                {isRefining ? "Refinando..." : "✨ Refinar + Resumo"}
               </button>
+              {!summary && transcription && (
+                <button 
+                  className="summary-btn" 
+                  onClick={() => onSummarize(transcription)} 
+                  disabled={isSummarizing}
+                >
+                  {isSummarizing ? "Gerando..." : "📋 Gerar Resumo"}
+                </button>
+              )}
             </div>
           </div>
         )}
