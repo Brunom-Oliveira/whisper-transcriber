@@ -1,20 +1,34 @@
 ﻿import axios from "axios";
 import { ChangeEvent, useMemo, useState } from "react";
 
-interface ApiResponse {
+interface StartResponse {
   id: string;
-  transcription: string;
-  downloadUrl: string;
+  statusUrl: string;
 }
 
-const apiBaseUrl = process.env.REACT_APP_API_URL || "http://localhost:3001";
+interface StatusResponse {
+  id: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  progress: number;
+  stage: string;
+  startedAt?: string;
+  completedAt?: string;
+  transcription?: string;
+  downloadUrl?: string;
+  error?: string;
+}
+
+const apiBaseUrl = process.env.REACT_APP_API_URL || "http://localhost:4001";
 
 export function App() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressStage, setProgressStage] = useState("");
   const [transcription, setTranscription] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [error, setError] = useState("");
+  const [times, setTimes] = useState<{ start?: string; end?: string }>({});
 
   const fullDownloadUrl = useMemo(() => {
     if (!downloadUrl) return "";
@@ -27,6 +41,8 @@ export function App() {
     setTranscription("");
     setDownloadUrl("");
     setError("");
+    setProgress(0);
+    setProgressStage("");
   };
 
   const onTranscribe = async () => {
@@ -38,23 +54,57 @@ export function App() {
     try {
       setLoading(true);
       setError("");
+      setProgress(0);
+      setProgressStage("Enviando arquivo");
 
       const formData = new FormData();
       formData.append("audio", file);
 
-      const response = await axios.post<ApiResponse>(`${apiBaseUrl}/api/transcribe`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+      const start = await axios.post<StartResponse>(`${apiBaseUrl}/api/transcribe`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total ?? 1));
+          setProgress(percentCompleted);
+          if (percentCompleted < 100) {
+            setProgressStage(`Enviando: ${percentCompleted}%`);
+          } else {
+            setProgressStage("Processando no servidor...");
+          }
+        }
       });
 
-      setTranscription(response.data.transcription);
-      setDownloadUrl(response.data.downloadUrl);
+      let done = false;
+      while (!done) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const statusResponse = await axios.get<StatusResponse>(`${apiBaseUrl}${start.data.statusUrl}`);
+        const data = statusResponse.data;
+
+        setProgress(data.progress ?? 0);
+        setProgressStage(data.stage || "Processando");
+        
+        if (data.startedAt || data.completedAt) {
+          setTimes({ start: data.startedAt, end: data.completedAt });
+        }
+
+        if (data.status === "completed") {
+          setTranscription(data.transcription || "");
+          setDownloadUrl(data.downloadUrl || "");
+          done = true;
+        } else if (data.status === "failed") {
+          throw new Error(data.error || "Falha ao transcrever o audio.");
+        }
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const apiError = err.response?.data?.error;
-        setError(apiError || "Falha ao transcrever o audio.");
+        setError(apiError || "Falha ao enviar arquivo ou processar transcricao.");
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError("Erro inesperado ao processar a solicitacao.");
       }
+      setProgress(0);
+      setProgressStage("");
     } finally {
       setLoading(false);
     }
@@ -72,16 +122,43 @@ export function App() {
           {loading ? "Transcrevendo..." : "Transcrever"}
         </button>
 
-        {loading && <div className="spinner" aria-label="Carregando" />}
+        {loading && (
+          <div className="progress-container">
+            <div className="progress-wrap">
+              <div className="progress-head">
+                <span>{progressStage || "Processando"}</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 
         {transcription && (
           <div className="result">
-            <h2>Transcricao</h2>
+            <div className="result-header">
+              <h2>Transcricao</h2>
+              {times.start && (
+                <div className="time-info">
+                  <span>Início: {new Date(times.start).toLocaleTimeString()}</span>
+                  {times.end && (
+                    <>
+                      <span> • Término: {new Date(times.end).toLocaleTimeString()}</span>
+                      <span className="duration">
+                        ({Math.round((new Date(times.end).getTime() - new Date(times.start).getTime()) / 1000)}s)
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <pre>{transcription}</pre>
             {fullDownloadUrl && (
-              <a href={fullDownloadUrl} download>
+              <a href={fullDownloadUrl} download className="download-btn">
                 Baixar .txt
               </a>
             )}
