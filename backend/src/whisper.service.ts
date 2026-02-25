@@ -71,11 +71,11 @@ export class WhisperService {
       await fs.promises.mkdir(chunksDir, { recursive: true });
       await fs.promises.mkdir(partialDir, { recursive: true });
 
-      // Normaliza audio para mono 16k para melhorar a consistencia da transcricao.
+      // Normaliza audio para mono 16k e limita aos primeiros 6 minutos (360s) para performance.
       onProgress?.({ stage: "Normalizando audio", progress: 10 });
       await runCommand(
         "ffmpeg",
-        ["-y", "-i", inputFile, "-ac", "1", "-ar", "16000", normalizedInput],
+        ["-y", "-t", "360", "-i", inputFile, "-ac", "1", "-ar", "16000", normalizedInput],
         "Erro ao normalizar audio com ffmpeg"
       );
 
