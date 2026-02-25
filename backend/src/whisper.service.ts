@@ -1,4 +1,4 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
@@ -30,6 +30,7 @@ export class WhisperService {
         "-nt",
         "-f",
         inputFile,
+        "-otxt",
         "-of",
         outputBasePath
       ];

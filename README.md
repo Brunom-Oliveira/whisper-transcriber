@@ -1,4 +1,4 @@
-﻿# whisper-transcriber
+# whisper-transcriber
 
 Projeto full stack para transcricao de audio usando `whisper.cpp` via CLI, com upload web, exibicao da transcricao e download de `.txt`.
 
@@ -173,3 +173,29 @@ docker compose up --build -d
 - A pasta `outputs/` e servida em `/downloads` para baixar os `.txt`.
 - Existe estrutura inicial para evolucao para fila assíncrona em `backend/src/queue.ts`.
 - Limpeza automatica periodica remove arquivos antigos para evitar crescimento infinito de disco.
+
+## Docker (VPS - build estavel)
+
+Nesta versao, o backend compila e empacota o `whisper-cli` dentro da imagem Docker.
+No host, apenas os modelos sao montados em modo leitura.
+
+`docker-compose.yml`:
+- Backend publicado em `4001:3001`
+- Frontend publicado em `3000:3000`
+- Volume de modelos: `/root/whisper.cpp/models:/opt/whisper/models:ro`
+
+Backend `.env`:
+
+```env
+PORT=3001
+WHISPER_PATH=/opt/whisper/bin/whisper-cli
+WHISPER_MODEL=/opt/whisper/models/ggml-base.bin
+FILE_TTL_MINUTES=120
+```
+
+Subida recomendada:
+
+```bash
+docker-compose down --remove-orphans
+docker-compose up -d --build --force-recreate
+```
