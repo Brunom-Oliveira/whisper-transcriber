@@ -193,14 +193,12 @@ export function buildRoutes(deps: RouteDeps): Router {
               2. Formate o texto final exatamente como o padrão abaixo:
               
               ---
-              ATENDENTE: [Nome do Técnico Identificado]
-              CLIENTE/EMPRESA: [Nome da Empresa, ex: Salog]
+              EMPRESA: [Nome da Empresa, ex: Salog]
+              CLIENTE: [Nome do Cliente que solicitou o suporte]
+              ATENDENTE: [Nome do Técnico da R3 que atendeu]
               
-              DESCRIÇÃO DO PROBLEMA:
-              [Descreva o problema relatado de forma técnica e concisa]
-              
-              AÇÕES REALIZADAS:
-              [Liste em tópicos o que foi feito: acessos, testes, correções, ajustes de rotina]
+              RESUMO DO CASO:
+              [Descreva de forma técnica o problema relatado e as ações que foram realizadas para resolvê-lo ou mitigá-lo]
               ---
               
               Use termos técnicos do WMS Conquista (Picking Expresso, bipagem, SKU, B22, faturamento, etc).`
