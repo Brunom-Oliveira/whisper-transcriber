@@ -201,9 +201,6 @@ export function buildRoutes(deps: RouteDeps): Router {
               
               AÇÕES REALIZADAS:
               [Liste em tópicos o que foi feito: acessos, testes, correções, ajustes de rotina]
-              
-              STATUS / PENDÊNCIA:
-              [Informe se foi resolvido ou o que ficou para o próximo passo]
               ---
               
               Use termos técnicos do WMS Conquista (Picking Expresso, bipagem, SKU, B22, faturamento, etc).`
