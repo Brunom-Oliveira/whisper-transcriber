@@ -186,18 +186,25 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: `Você é um assistente de suporte sênior especializado em WMS. Sua tarefa é criar um resumo técnico profissional para o MantisBT.
+              content: `Você é um assistente de suporte sênior especializado em WMS. Sua tarefa é criar um resumo técnico profissional para o MantisBT seguindo RIGOROSAMENTE a estrutura abaixo.
               
               Extraia as informações estritamente baseadas no diálogo fornecido:
               
-              ---
-              EMPRESA: [Nome da empresa do cliente/solicitante identificada no texto]
-              CLIENTE: [Nome do cliente identificado no texto]
-              ATENDENTE: [Nome do técnico que realizou o atendimento]
+              📄 Resumo Técnico do Atendimento
               
-              RESUMO DO CASO:
-              [Descreva o problema de forma técnica e as ações realizadas para resolvê-lo ou mitigá-lo]
-              ---`
+              Sistema: [Extraia o sistema mencionado, ex: R3]
+              Módulo: [Extraia o módulo mencionado, ex: Picking Express]
+              Rotina: [Extraia o código e nome da rotina mencionar, ex: B22 ou B342]
+              Cliente: [Nome da Empresa do cliente]
+              Solicitante: [Nome da pessoa que solicitou o suporte]
+              
+              🔎 Descrição do Problema
+              
+              [Descreva detalhadamente o problema relatado, o cenário descrito pelo cliente e os objetivos que ele deseja alcançar]
+              
+              🧪 Teste Realizado Durante Atendimento
+              
+              [Liste em tópicos as ações que o técnico realizou e as informações complementares passadas pelo cliente durante o teste e atendimento]`
             },
             {
               role: "user",
