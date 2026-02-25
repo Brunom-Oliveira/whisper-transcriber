@@ -106,5 +106,57 @@ export function buildRoutes(deps: RouteDeps): Router {
     res.status(200).json(job);
   });
 
+  router.post("/refine", async (req, res) => {
+    const { text } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      res.status(500).json({ error: "GROQ_API_KEY nao configurada no servidor." });
+      return;
+    }
+
+    if (!text) {
+      res.status(400).json({ error: "Texto e obrigatorio para refinamento." });
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: "Você é um especialista em suporte técnico do sistema WMS Conquista da empresa Salog. Sua tarefa é corrigir transcrições de áudio de call center. \n\nRegras:\n1. Corrija termos técnicos: 'Saló' -> 'Salog', 'FIC Impressor' -> 'Picking Expresso', 'pipar' -> 'bipar', 'metadoria' -> 'mercadoria'.\n2. Formate o texto como um diálogo claro entre 'Técnico' e 'Cliente'.\n3. Remova vícios de linguagem excessivos, mas mantenha o sentido original.\n4. Corrija a pontuação e gramática.\n5. Se houver códigos (como D3402, B22), mantenha-os corretamente."
+            },
+            {
+              role: "user",
+              content: `Refine esta transcrição:\n\n${text}`
+            }
+          ],
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro na API da Groq");
+      }
+
+      const data = await response.json();
+      const refinedText = data.choices[0]?.message?.content;
+
+      res.status(200).json({ refinedText });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao refinar texto.";
+      res.status(500).json({ error: message });
+    }
+  });
+
   return router;
 }

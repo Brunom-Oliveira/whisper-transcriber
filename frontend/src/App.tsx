@@ -29,6 +29,7 @@ export function App() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [error, setError] = useState("");
   const [times, setTimes] = useState<{ start?: string; end?: string }>({});
+  const [isRefining, setIsRefining] = useState(false);
 
   const fullDownloadUrl = useMemo(() => {
     if (!downloadUrl) return "";
@@ -43,6 +44,27 @@ export function App() {
     setError("");
     setProgress(0);
     setProgressStage("");
+  };
+
+  const onRefine = async () => {
+    if (!transcription) return;
+
+    try {
+      setIsRefining(true);
+      setError("");
+      const response = await axios.post<{ refinedText: string }>(`${apiBaseUrl}/api/refine`, {
+        text: transcription
+      });
+      setTranscription(response.data.refinedText);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || "Falha ao refinar texto.");
+      } else {
+        setError("Erro ao processar refinamento.");
+      }
+    } finally {
+      setIsRefining(false);
+    }
   };
 
   const onTranscribe = async () => {
@@ -157,11 +179,20 @@ export function App() {
               )}
             </div>
             <pre>{transcription}</pre>
-            {fullDownloadUrl && (
-              <a href={fullDownloadUrl} download className="download-btn">
-                Baixar .txt
-              </a>
-            )}
+            <div className="result-actions">
+              {fullDownloadUrl && (
+                <a href={fullDownloadUrl} download className="download-btn">
+                  Baixar .txt
+                </a>
+              )}
+              <button 
+                className="refine-btn" 
+                onClick={onRefine} 
+                disabled={isRefining}
+              >
+                {isRefining ? "Refinando..." : "✨ Refinar com IA"}
+              </button>
+            </div>
           </div>
         )}
       </section>

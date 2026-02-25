@@ -130,7 +130,7 @@ export class WhisperService {
           const chunkFile = chunks[index];
           const partBase = path.join(partialDir, `part_${String(index).padStart(3, "0")}`);
 
-          const initialPrompt = "Transcrição de suporte técnico WMS. Termos: mercadoria, bipar código de barras, SKU, picking, packing, inventário, rotina B22, faturamento, coletor, estorno, endereçamento.";
+          const initialPrompt = "Transcrição de suporte técnico sistema WMS Conquista da empresa Salog. Termos importantes: Picking Expresso, bipar código de barras, SKU, endereçamento, inventário, rotina B22, mercadoria, AnyDesk, WhatsApp, suporte técnico.";
 
           const args = [
             "-m", this.config.modelPath,
