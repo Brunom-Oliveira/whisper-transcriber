@@ -79,7 +79,7 @@ export class WhisperService {
         "Erro ao normalizar audio com ffmpeg"
       );
 
-      // Remove silencios longos e segmenta em blocos de 60s para maximizar o paralelismo.
+      // Segmenta em blocos de 45s para maximizar a granulosidade do paralelismo em CPUs multicore.
       onProgress?.({ stage: "Segmentando audio", progress: 20 });
       const segmentPattern = path.join(chunksDir, "chunk_%03d.wav");
       await runCommand(
@@ -93,7 +93,7 @@ export class WhisperService {
           "-f",
           "segment",
           "-segment_time",
-          "60",
+          "45",
           "-c:a",
           "pcm_s16le",
           "-ar",
@@ -111,12 +111,13 @@ export class WhisperService {
       }
 
       const parts: string[] = new Array(chunks.length).fill("");
-      onProgress?.({ stage: "Transcrevendo blocos (Paralelo)", progress: 25 });
+      onProgress?.({ stage: "Transcrevendo blocos (Otimizado)", progress: 25 });
 
-      // Configuração de concorrência baseada nos cores da CPU
+      // Configuração de concorrência: tenta usar o máximo de threads disponíveis de forma inteligente
       const cpuCores = os.cpus().length;
-      const concurrency = Math.max(1, Math.floor(cpuCores / 2)); // Usa metade dos cores para processos paralelos
-      const threadsPerProcess = Math.max(2, Math.floor(cpuCores / concurrency));
+      // Para VPS com muitos cores, rodar 3-4 processos em paralelo é o ideal.
+      const concurrency = Math.min(chunks.length, Math.max(1, Math.floor(cpuCores / 4))); 
+      const threadsPerProcess = Math.max(4, Math.floor(cpuCores / concurrency));
 
       let completedChunks = 0;
       const queue = [...chunks.keys()];
@@ -133,12 +134,13 @@ export class WhisperService {
             "-m", this.config.modelPath,
             "-l", this.config.language,
             "-t", threadsPerProcess.toString(),
+            "-fa", "1", // Habilita Flash Attention para velocidade extra
             "-bo", "1",
             "-bs", "1",
             "-f", chunkFile,
             "-otxt",
             "-of", partBase,
-            "-nth", "0.7",
+            "-nth", "0.8", // Mais agressivo no corte de silêncio
             "-et", "2.0",
             "-lpt", "-0.5"
           ];
