@@ -161,21 +161,19 @@ export function App() {
         <h1>Whisper Transcriber</h1>
         <p className="subtitle">Upload de audio e transcricao local com whisper.cpp</p>
 
-        <div className="input-group">
-          <input type="file" accept="audio/*" onChange={onFileChange} id="audio-input" />
-          <label htmlFor="audio-input" className="file-label">
-            {file ? file.name : "Selecionar Áudio"}
-          </label>
+        <div style={{ marginBottom: '20px' }}>
+          <input type="file" accept="audio/*" onChange={onFileChange} />
         </div>
 
-        <div className="checkbox-group">
-          <label className="checkbox-container">
-            <input 
-              type="checkbox" 
-              checked={fullAudio} 
-              onChange={(e) => setFullAudio(e.target.checked)} 
-            />
-            <span className="checkmark"></span>
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+          <input 
+            type="checkbox" 
+            id="fullAudio"
+            checked={fullAudio} 
+            onChange={(e) => setFullAudio(e.target.checked)} 
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          <label htmlFor="fullAudio" style={{ cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
             Transcrever áudio completo (desativa limite de 6 min)
           </label>
         </div>
@@ -184,6 +182,7 @@ export function App() {
           onClick={onTranscribe} 
           disabled={loading || !file} 
           className="transcribe-btn"
+          style={{ width: '100%', padding: '12px', fontSize: '16px' }}
         >
           {loading ? "Processando..." : "Iniciar Transcrição"}
         </button>
