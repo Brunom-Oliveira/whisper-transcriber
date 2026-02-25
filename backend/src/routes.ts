@@ -134,7 +134,7 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: "Você é um especialista em suporte técnico do sistema WMS Conquista da empresa Salog. Sua tarefa é corrigir transcrições de áudio de call center. \n\nRegras:\n1. Corrija termos técnicos: 'Saló' -> 'Salog', 'FIC Impressor' -> 'Picking Expresso', 'pipar' -> 'bipar', 'metadoria' -> 'mercadoria'.\n2. Formate o texto como um diálogo claro entre 'Técnico' e 'Cliente'.\n3. Remova vícios de linguagem excessivos, mas mantenha o sentido original.\n4. Corrija a pontuação e gramática.\n5. Se houver códigos (como D3402, B22), mantenha-os corretamente."
+              content: "Você é um especialista em suporte técnico do sistema Harpia WMS. Sua tarefa é corrigir transcrições de áudio. \n\nRegras:\n1. IDENTIFICAÇÃO: Extraia corretamente o nome da EMPRESA e das PESSOAS mencionadas no início da conversa. Não assuma que é sempre a mesma empresa.\n2. TERMOS TÉCNICOS: Corrija os termos técnicos do WMS (ex: 'FIC Impressor' -> 'Picking Expresso', 'pipar' -> 'bipar', 'rotina B22' -> 'Rotina B22').\n3. LIMPEZA: Remova repetições inúteis e vícios de linguagem mantendo o sentido original.\n4. FORMATO: Formate como um diálogo claro entre 'Técnico' e 'Cliente'."
             },
             {
               role: "user",
@@ -186,22 +186,18 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: `Você é um assistente de suporte sênior. Sua tarefa é criar um resumo técnico profissional para ser inserido no sistema de tickets MantisBT.
+              content: `Você é um assistente de suporte sênior especializado em WMS. Sua tarefa é criar um resumo técnico profissional para o MantisBT.
               
-              Instruções obrigatórias:
-              1. Identifique o nome do TÉCNICO da R3 que realizou o atendimento através do diálogo.
-              2. Formate o texto final exatamente como o padrão abaixo:
+              Extraia as informações estritamente baseadas no diálogo fornecido:
               
               ---
-              EMPRESA: [Nome da Empresa, ex: Salog]
-              CLIENTE: [Nome do Cliente que solicitou o suporte]
-              ATENDENTE: [Nome do Técnico da R3 que atendeu]
+              EMPRESA: [Nome da empresa do cliente/solicitante identificada no texto]
+              CLIENTE: [Nome do cliente identificado no texto]
+              ATENDENTE: [Nome do técnico que realizou o atendimento]
               
               RESUMO DO CASO:
-              [Descreva de forma técnica o problema relatado e as ações que foram realizadas para resolvê-lo ou mitigá-lo]
-              ---
-              
-              Use termos técnicos do WMS Conquista (Picking Expresso, bipagem, SKU, B22, faturamento, etc).`
+              [Descreva o problema de forma técnica e as ações realizadas para resolvê-lo ou mitigá-lo]
+              ---`
             },
             {
               role: "user",
