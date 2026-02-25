@@ -201,8 +201,22 @@ export function App() {
 
             {summary && (
               <div className="summary-container">
-                <h3>📋 Resumo Técnico do Atendimento</h3>
-                <pre style={{ whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>{summary}</pre>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <h3 style={{ margin: 0 }}>📋 Resumo para MantisBT</h3>
+                  <button 
+                    className="copy-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(summary);
+                      const btn = document.activeElement as HTMLButtonElement;
+                      const originalText = btn.innerText;
+                      btn.innerText = "✅ Copiado!";
+                      setTimeout(() => { btn.innerText = originalText; }, 2000);
+                    }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <pre style={{ whiteSpace: 'pre-wrap', fontStyle: 'italic', margin: 0 }}>{summary}</pre>
               </div>
             )}
 

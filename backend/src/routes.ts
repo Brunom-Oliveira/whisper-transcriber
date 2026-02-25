@@ -184,20 +184,31 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: `Você é um assistente sênior de suporte técnico para o WMS Conquista. 
-              Sua tarefa é ler uma transcrição de atendimento e gerar um RESUMO TÉCNICO estruturado para abertura de ticket.
+              content: `Você é um assistente de suporte sênior. Sua tarefa é criar um resumo técnico profissional para ser inserido no sistema de tickets MantisBT.
               
-              Estrutura desejada:
-              - **CLIENTE/EMPRESA**: (Identifique se é Salog ou outra)
-              - **RESUMO DO PROBLEMA**: (O que estava acontecendo? Erro na rotina B22? Picking Expresso travado?)
-              - **AÇÕES REALIZADAS**: (O que o técnico fez? Voltou versão? Acessou AnyDesk?)
-              - **PRÓXIMOS PASSOS**: (O que ficou pendente?)
+              Instruções obrigatórias:
+              1. Identifique o nome do TÉCNICO da R3 que realizou o atendimento através do diálogo.
+              2. Formate o texto final exatamente como o padrão abaixo:
               
-              Seja direto e use termos técnicos corretos.`
+              ---
+              ATENDENTE: [Nome do Técnico Identificado]
+              CLIENTE/EMPRESA: [Nome da Empresa, ex: Salog]
+              
+              DESCRIÇÃO DO PROBLEMA:
+              [Descreva o problema relatado de forma técnica e concisa]
+              
+              AÇÕES REALIZADAS:
+              [Liste em tópicos o que foi feito: acessos, testes, correções, ajustes de rotina]
+              
+              STATUS / PENDÊNCIA:
+              [Informe se foi resolvido ou o que ficou para o próximo passo]
+              ---
+              
+              Use termos técnicos do WMS Conquista (Picking Expresso, bipagem, SKU, B22, faturamento, etc).`
             },
             {
               role: "user",
-              content: `Gere um resumo técnico para este atendimento:\n\n${text}`
+              content: `Gere o resumo para o MantisBT desta transcrição:\n\n${text}`
             }
           ],
           temperature: 0.1

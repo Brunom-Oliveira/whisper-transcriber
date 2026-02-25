@@ -259,6 +259,23 @@ pre {
   color: #1e40af;
 }
 
+.copy-btn {
+  background: transparent;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
 .error {
   color: var(--danger);
   margin-top: 15px;
