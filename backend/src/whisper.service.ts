@@ -130,17 +130,19 @@ export class WhisperService {
           const chunkFile = chunks[index];
           const partBase = path.join(partialDir, `part_${String(index).padStart(3, "0")}`);
 
+          const initialPrompt = "Transcrição de suporte técnico WMS. Termos: mercadoria, bipar código de barras, SKU, picking, packing, inventário, rotina B22, faturamento, coletor, estorno, endereçamento.";
+
           const args = [
             "-m", this.config.modelPath,
             "-l", this.config.language,
             "-t", threadsPerProcess.toString(),
-            "-fa", "1", // Habilita Flash Attention para velocidade extra
-            "-bo", "1",
-            "-bs", "1",
+            "-fa",
+            "-bs", "5", // Beam search maior para maior precisão técnica
+            "-p", initialPrompt, // Prompt inicial com termos chaves
             "-f", chunkFile,
             "-otxt",
             "-of", partBase,
-            "-nth", "0.8", // Mais agressivo no corte de silêncio
+            "-nth", "0.8",
             "-et", "2.0",
             "-lpt", "-0.5"
           ];
