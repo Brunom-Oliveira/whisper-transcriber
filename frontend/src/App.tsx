@@ -4,6 +4,7 @@ import { ChangeEvent, useMemo, useState } from "react";
 interface StartResponse {
   id: string;
   statusUrl: string;
+  attendantName?: string;
 }
 
 interface StatusResponse {
@@ -11,6 +12,7 @@ interface StatusResponse {
   status: "queued" | "processing" | "completed" | "failed";
   progress: number;
   stage: string;
+  attendantName?: string;
   startedAt?: string;
   completedAt?: string;
   transcription?: string;
@@ -33,6 +35,7 @@ export function App() {
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [fullAudio, setFullAudio] = useState(false);
+  const [attendantName, setAttendantName] = useState("");
 
   const fullDownloadUrl = useMemo(() => {
     if (!downloadUrl) return "";
@@ -54,7 +57,8 @@ export function App() {
     try {
       setIsSummarizing(true);
       const response = await axios.post<{ summary: string }>(`${apiBaseUrl}/api/summarize`, {
-        text: textToSummarize
+        text: textToSummarize,
+        attendantName
       });
       setSummary(response.data.summary);
     } catch (err) {
@@ -71,7 +75,8 @@ export function App() {
       setIsRefining(true);
       setError("");
       const response = await axios.post<{ refinedText: string }>(`${apiBaseUrl}/api/refine`, {
-        text: transcription
+        text: transcription,
+        attendantName
       });
       setTranscription(response.data.refinedText);
       // Removida geração automática de resumo para manter ação manual
@@ -117,6 +122,7 @@ export function App() {
           }
         }
       });
+      setAttendantName(start.data.attendantName || "");
 
       let done = false;
       while (!done) {
@@ -129,6 +135,9 @@ export function App() {
         
         if (data.startedAt || data.completedAt) {
           setTimes({ start: data.startedAt, end: data.completedAt });
+        }
+        if (data.attendantName) {
+          setAttendantName(data.attendantName);
         }
 
         if (data.status === "completed") {

@@ -18,11 +18,19 @@ interface TranscriptionJob {
   status: JobStatus;
   progress: number;
   stage: string;
+  attendantName?: string;
   startedAt?: Date;
   completedAt?: Date;
   transcription?: string;
   downloadUrl?: string;
   error?: string;
+}
+
+function extractAttendantName(originalName: string): string | undefined {
+  const match = originalName.match(/^\[([^\]]+)\]_/);
+  if (!match) return undefined;
+  const name = match[1].trim();
+  return name.length > 0 ? name : undefined;
 }
 
 export function buildRoutes(deps: RouteDeps): Router {
@@ -51,18 +59,21 @@ export function buildRoutes(deps: RouteDeps): Router {
 
     const id = uuidv4();
     const inputFile = req.file.path;
+    const attendantName = extractAttendantName(req.file.originalname);
     const outputBasePath = path.join(deps.outputsDir, id);
     const job: TranscriptionJob = {
       id,
       status: "queued",
       progress: 0,
-      stage: "Na fila"
+      stage: "Na fila",
+      attendantName
     };
     jobs.set(id, job);
 
     res.status(202).json({
       id,
-      statusUrl: `/api/transcribe/${id}`
+      statusUrl: `/api/transcribe/${id}`,
+      attendantName
     });
 
     (async () => {
@@ -107,7 +118,7 @@ export function buildRoutes(deps: RouteDeps): Router {
   });
 
   router.post("/refine", async (req, res) => {
-    const { text } = req.body;
+    const { text, attendantName } = req.body as { text?: string; attendantName?: string };
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
@@ -132,11 +143,19 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: "Você é um especialista em suporte técnico do sistema Harpia WMS. Sua tarefa é corrigir transcrições de áudio. \n\nRegras:\n1. IDENTIFICAÇÃO: Extraia corretamente o nome da EMPRESA e das PESSOAS mencionadas no início da conversa. Não assuma que é sempre a mesma empresa.\n2. TERMOS TÉCNICOS: Corrija os termos técnicos do WMS (ex: 'FIC Impressor' -> 'Picking Expresso', 'pipar' -> 'bipar', 'rotina B22' -> 'Rotina B22').\n3. LIMPEZA: Remova repetições inúteis e vícios de linguagem mantendo o sentido original.\n4. FORMATO: Formate como um diálogo claro entre 'Técnico' e 'Cliente'."
+              content: [
+                "Voce e um especialista em suporte tecnico WMS para limpar transcricoes.",
+                "Regra obrigatoria: NAO invente informacoes.",
+                attendantName
+                  ? `O nome do atendente e fixo: ${attendantName}. Nunca troque esse nome de papel.`
+                  : "Se nao houver evidencia de papel, use Participante A e Participante B.",
+                "Nao inferir modulo/sistema/rotina sem mencao literal.",
+                "Apenas corrigir ortografia, pontuacao e remover repeticoes."
+              ].join(" ")
             },
             {
               role: "user",
-              content: `Refine esta transcrição:\n\n${text}`
+              content: `Refine esta transcricao mantendo fatos:\n\n${text}`
             }
           ],
           temperature: 0.3
@@ -159,7 +178,7 @@ export function buildRoutes(deps: RouteDeps): Router {
   });
 
   router.post("/summarize", async (req, res) => {
-    const { text } = req.body;
+    const { text, attendantName } = req.body as { text?: string; attendantName?: string };
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
@@ -184,27 +203,14 @@ export function buildRoutes(deps: RouteDeps): Router {
           messages: [
             {
               role: "system",
-              content: `Você é um assistente de suporte sênior especializado em WMS. Sua tarefa é criar um resumo técnico profissional para o MantisBT seguindo RIGOROSAMENTE a estrutura abaixo.
-              
-              IMPORTANTE: O texto deve ser escrito em PRIMEIRA PESSOA (ex: "Verifiquei", "Realizei", "Identifiquei"), pois este resumo será inserido pelo próprio técnico que realizou o atendimento.
-              
-              Extraia as informações estritamente baseadas no diálogo fornecido:
-              
-              📄 Resumo Técnico do Atendimento
-              
-              Sistema: [Extraia o sistema mencionado, ex: R3]
-              Módulo: [Extraia o módulo mencionado, ex: Picking Express]
-              Rotina: [Extraia o código e nome da rotina mencionar, ex: B22 ou B342]
-              Cliente: [Nome da Empresa do cliente]
-              Solicitante: [Nome da pessoa que solicitou o suporte]
-              
-              🔎 Descrição do Problema
-              
-              [Descreva detalhadamente o problema que o cliente me relatou, o cenário descrito e os objetivos que ele desejava alcançar]
-              
-              🧪 Teste Realizado Durante Atendimento
-              
-              [Liste em tópicos, EM PRIMEIRA PESSOA, as ações que eu realizei para testar, validar ou corrigir o problema, incluindo as conclusões que chegamos durante o chamado]`
+              content: [
+                "Voce e um assistente de suporte senior para gerar resumo tecnico MantisBT.",
+                attendantName
+                  ? `O tecnico responsavel e ${attendantName}. Escreva em primeira pessoa desse tecnico.`
+                  : "Escreva em primeira pessoa do tecnico sem inventar nome.",
+                "Se algum campo nao estiver explicito, use 'Nao identificado'.",
+                "Nao invente sistema, modulo, rotina ou empresa."
+              ].join(" ")
             },
             {
               role: "user",
