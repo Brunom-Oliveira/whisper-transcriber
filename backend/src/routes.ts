@@ -65,8 +65,6 @@ export function buildRoutes(deps: RouteDeps): Router {
       statusUrl: `/api/transcribe/${id}`
     });
 
-    const fullAudio = req.body.fullAudio === "true" || req.body.fullAudio === true;
-
     (async () => {
       try {
         job.status = "processing";
@@ -77,7 +75,7 @@ export function buildRoutes(deps: RouteDeps): Router {
         const result = await deps.whisperService.transcribe(inputFile, outputBasePath, (update) => {
           job.progress = Math.max(0, Math.min(99, update.progress));
           job.stage = update.stage;
-        }, fullAudio);
+        });
 
         job.status = "completed";
         job.progress = 100;
